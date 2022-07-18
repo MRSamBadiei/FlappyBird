@@ -1,0 +1,332 @@
+<!--
+
+New Update:
+
+
+-- Fixed some bugs
+
+
+// ** Check out my other games ** \\ 
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Flappy Bird made by Sami</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g==" crossorigin="anonymous"></script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+body,html{
+    width:100%;
+    height:100%;
+    background-image:url("https://image.freepik.com/free-vector/cloud-background_53876-90977.jpg");
+    background-position: left top;
+    background-repeat: no-repeat ;
+}
+*{
+font-family: 'Press Start 2P', cursive;
+    margin:0;
+    padding:0;
+}
+p{
+margin-top:25px;
+    text-align:center ;
+}
+#retry{
+padding:15px 35px;
+border: 0;
+border-radius:25px;
+position:absolute ;
+bottom: 55px;
+left: 50%;
+transform:translateX(-50%);
+}
+.center{
+    position:absolute ;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+   
+}
+
+#play{
+    width:250px;
+    height:250px;
+    background-color:#fff;
+    border-radius:25px;
+    display:none;
+}
+</style>
+    </head>
+    <body>
+        <canvas id="canv"></canvas>
+        <div class="center" id="play">
+        <p>Game Over :(</p>
+        <p id="scoreCount"></p>
+        <button id="retry">Retry</button> 
+        </div>
+        <script>
+        
+        
+   var image = new Image(75,54);
+    image.src =    "https://i.postimg.cc/yxm13Zk1/Pics-Art-04-11-06-51-18.png";
+    
+    var base = new Image(336,112);
+    base.src ="https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/base.png";
+
+    var pipe_img = new Image();
+    pipe_img.src = "https://raw.githubusercontent.com/SamBadiei/FlappyBirdAssets/main/pipe-green.png";
+    var pipe_up_img = new Image();
+    pipe_up_img.src = "https://raw.githubusercontent.com/SamBadiei/FlappyBirdAssets/main/pipe-green-up.png";
+
+
+
+window.onload = start;
+function start() {
+    var canvas = document.getElementById("canv"),
+    page_width = window.innerWidth,
+    page_height = window.innerHeight,
+    ctx = canvas.getContext("2d"),
+    gravity = 0.2,
+    mc = new Hammer(canvas),
+    score = 0,
+    play = document.getElementById('play'),
+    retry = document.getElementById('retry'),
+    scoreCount = document.getElementById("scoreCount"),
+    pipes = [],
+    pipes_up = [],
+    pause = false;
+
+    
+    pipes.length = 0;
+    pipes_up.length =0;
+    play.style.display = "none"; 
+    
+    canvas.width = page_width ;
+    canvas.height = page_height ;
+    canvas.style.backgroundColor = "transparent";
+    
+    
+    
+    
+    
+    
+    class Bird{
+        constructor(x,y,w,h,color){
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+            this.color = color;
+            this.gravity = gravity;
+            this.speed = 0;
+        }
+        draw(){
+              ctx.drawImage(image,this.x,this.y);
+        }
+        update(){
+            this.draw();
+            this.speed += this.gravity;
+            this.y += this.speed;
+            if(this.y <= 0){
+                this.speed = 0;
+                this.y=0;
+            }else if(this.y >= page_height - this.h - 80){
+            this.speed = 0;
+            this.y = page_height -80 -this.h;
+            }
+        }
+        
+        
+    }
+    
+    
+    class Base{
+        constructor(x,y,w,h){
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        } 
+        draw(){
+              ctx.drawImage(base,this.x,this.y,this.w,this.h);
+  
+        }
+        update(){
+            this.draw();
+            this.x -= 3;
+        if(this.x + this.w <=0){
+            this.x = page_width;
+        }
+        }
+    }
+    
+    
+    
+    class Pipe{
+        constructor(x,y,h,color){
+            this.x = x;
+            this.y = y;
+            this.w = 75;
+            this.h = h;
+            this.color = color;
+        }
+        draw(){
+            ctx.beginPath();
+            ctx.drawImage(pipe_img,this.x,this.y,this.w,this.h);
+        }
+        drawUp(){
+            ctx.beginPath();
+            ctx.drawImage(pipe_up_img,this.x,this.y,this.w,this.h);
+        }
+        update(){
+            if(this.y != 0){
+                this.draw();
+            }else{
+                this.drawUp();
+            }
+            
+            this.x -= 3;
+        }
+    }
+ 
+    class Text{
+        constructor(x,y){
+            this.x= x;
+            this.y=y;
+            this.text;
+        }
+        draw(){
+        ctx.beginPath();
+        ctx.font = '20px Arials';
+       ctx.fillStyle = 'red';       
+       ctx.fillText(this.text,this.x,this.y);
+        }
+    } 
+ 
+ 
+var can_score = new Text(25,45), 
+bird = new Bird(50,50,75,54,'red'),
+level = new Text(page_width - 85,45),
+ground = new Base(0,page_height - 80,336,80),
+ground_2 = new Base(336,page_height - 80,336,80),
+ground_3 = new Base(336+336,page_height-80,336,80),
+lvl = 0;
+
+
+
+function rnd(){
+
+    return Math.floor(Math.random() * 2);
+}
+
+
+/*
+function speedAndScore(score){
+      if(score <=5){
+          return 2000;
+        }else if(score === 10){
+          return 1500;
+        }else if(score ===15){
+          return 1000;
+        }else if(score === 20){
+          return 500;
+        }else if(score > 20 ){
+          return 300;
+        } 
+}
+*/
+
+function respawnPipe(){
+    var up = Math.floor(page_height/2);
+    var down = Math.floor(page_height/2);
+    var gap = 130; 
+    var up_count = up - gap + rnd() * 65;
+    var down_count = down - gap + rnd() * 65;
+
+    var pipe_down = new Pipe(page_width ,page_height - down_count , down_count ,"green");    
+    var pipe_up = new Pipe(page_width,0, up_count ,"green");
+
+    pipes.push(pipe_down);
+    pipes_up.push(pipe_up);
+}
+
+
+setInterval(()=>{
+    respawnPipe();
+},1000);
+
+
+    
+    (function anime(){
+ if(!pause) {
+    requestAnimationFrame(anime);
+ } else{
+     play.style.display ="block";
+     scoreCount.innerText = "Score: " + score;
+      }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+
+
+        bird.update();
+        pipes.forEach((e,index)=>{
+            e.update();
+            
+            
+            
+            
+            if(bird.x + bird.w >= e.x && bird.y + bird.h >= e.y){
+                pause = true;
+            }
+            if(e.x + e.w <= bird.x){
+            setTimeout(()=>{
+                pipes.splice(index,1);
+            },0);
+                
+                score++;
+
+            }
+            
+            
+        });
+        
+        pipes_up.forEach((e,index)=>{
+            e.update();
+            if(bird.x + bird.w >= e.x && bird.y <= e.h){
+                pause = true;
+            }
+            if(e.x + e.w <= bird.x){
+            
+             setTimeout(()=>{        
+             pipes_up.splice(index,1);
+             },0);
+            }
+        });
+        
+        can_score.text = "Score: " + score;
+        level.text = "Level: " + lvl;
+        can_score.draw();
+        level.draw();
+        ground.update();
+        ground_2.update();
+        ground_3.update();
+    })();
+    
+    
+    
+mc.on("hammer.input", function(ev) {
+    if(ev.pointerType === "touch" || ev.pointerType === "mouse"){
+        if(ev.eventType === 1){
+            bird.gravity = -0.4;
+            
+        }else if(ev.eventType === 4 || ev.eventType === 8){
+            bird.gravity = gravity;
+        }
+    }
+ });
+  retry.addEventListener('click',start);
+}
+        </script>
+    </body>
+</html>
